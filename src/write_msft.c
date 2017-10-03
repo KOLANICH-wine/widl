@@ -39,10 +39,8 @@
 
 #define NONAMELESSUNION
 
-#include "winerror.h"
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
+#include <typedefs.h>
+#include <nls.h>
 
 #include "widl.h"
 #include "typelib.h"
@@ -52,6 +50,12 @@
 #include "hash.h"
 #include "typetree.h"
 #include "parser.h"
+
+#ifdef __REACTOS__
+#define S_OK           0
+#define S_FALSE        1
+#define E_OUTOFMEMORY  ((HRESULT)0x8007000EL)
+#endif
 
 enum MSFT_segment_index {
     MSFT_SEG_TYPEINFO = 0,  /* type information */
