@@ -83,8 +83,10 @@ Only generate 32-bit or 64-bit code respectively (the default is to
 generate both 32-bit and 64-bit versions into the same destination
 file).
 .PP
-.IP "\fB--rt\fR"
-Enable additional language extensions for IDL to support WinRT.
+.IP "\fB--winrt\fR"
+Enable Windows Runtime mode.
+.IP "\fB--ns_prefix\fR"
+Prefix namespaces with ABI namespace.
 .PP
 .B Registration script options:
 .IP "\fB-r\fR"
@@ -133,7 +135,7 @@ Debug level \fIn\fR is a bitmask with the following meaning:
     * 0x20 Preprocessor yacc trace
 .SH BUGS
 Bugs can be reported on the
-.UR http://bugs.winehq.org
+.UR https://bugs.winehq.org
 .B Wine bug tracker
 .UE .
 .SH AUTHORS
@@ -146,10 +148,10 @@ Dan Hipschman.
 .B widl
 is part of the Wine distribution, which is available through WineHQ,
 the
-.UR http://www.winehq.org/
+.UR https://www.winehq.org/
 .B Wine development headquarters
 .UE .
 .SH "SEE ALSO"
-.UR http://www.winehq.org/help
+.UR https://www.winehq.org/help
 .B Wine documentation and support
 .UE .
