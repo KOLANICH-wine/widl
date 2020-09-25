@@ -39,10 +39,15 @@
 
 #define NONAMELESSUNION
 
+#ifdef __REACTOS__
+#include <typedefs.h>
+#include <nls.h>
+#else
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#endif
 
 #include "widl.h"
 #include "typelib.h"
@@ -53,6 +58,12 @@
 #include "typetree.h"
 #include "parser.h"
 #include "typegen.h"
+
+#ifdef __REACTOS__
+#define S_OK           0
+#define S_FALSE        1
+#define E_OUTOFMEMORY  ((HRESULT)0x8007000EL)
+#endif
 
 enum MSFT_segment_index {
     MSFT_SEG_TYPEINFO = 0,  /* type information */
@@ -2690,6 +2701,9 @@ static void save_all_changes(msft_typelib_t *typelib)
             sprintf( typelib_id, "#%d", expr->cval );
         add_output_to_resources( "TYPELIB", typelib_id );
         output_typelib_regscript( typelib->typelib );
+#ifdef __REACTOS__
+        flush_output_resources( typelib_name );
+#endif
     }
     else flush_output_buffer( typelib_name );
 }

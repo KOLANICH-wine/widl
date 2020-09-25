@@ -1217,8 +1217,12 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const type_
     if (!is_callas(func->attrs)) {
       const var_t *arg;
 
+#ifdef __REACTOS__
+      fprintf(header, "FORCEINLINE ");
+#else
       fprintf(header, "static FORCEINLINE ");
-      write_type_decl_left(header, type_function_get_ret(func->declspec.type));
+#endif
+      write_type_decl_left(header, type_function_get_rettype(func->type));
       fprintf(header, " %s_%s(", name, get_name(func));
       write_args(header, type_function_get_args(func->declspec.type), name, 1, FALSE, NAME_C);
       fprintf(header, ") {\n");
@@ -1252,6 +1256,17 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
 
   if (type_iface_get_inherit(iface))
     do_write_c_method_def(header, type_iface_get_inherit(iface), name);
+#ifdef __REACTOS__ /* r59312 / 3ab1571 */
+  else if (type_iface_get_stmts(iface) == NULL)
+  {
+    fprintf(header, "#ifndef __cplusplus\n");
+    indent(header, 0);
+    fprintf(header, "char dummy;\n");
+    fprintf(header, "#endif\n");
+    fprintf(header, "\n");
+    return;
+  }
+#endif
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
@@ -1802,7 +1817,12 @@ void write_header(const statement_list_t *stmts)
   fprintf(header, "#ifdef _WIN32\n");
   fprintf(header, "#ifndef __REQUIRED_RPCNDR_H_VERSION__\n");
   fprintf(header, "#define __REQUIRED_RPCNDR_H_VERSION__ 475\n");
-  fprintf(header, "#endif\n");
+  fprintf(header, "#endif\n\n");
+
+  fprintf(header, "#ifdef __REACTOS__\n");
+  fprintf(header, "#define WIN32_LEAN_AND_MEAN\n");
+  fprintf(header, "#endif\n\n");
+
   fprintf(header, "#include <rpc.h>\n" );
   fprintf(header, "#include <rpcndr.h>\n" );
   if (!for_each_serializable(stmts, NULL, serializable_exists))

@@ -32,8 +32,12 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef __REACTOS__
+#include <typedefs.h>
+#else
 #include "windef.h"
 #include "winbase.h"
+#endif
 
 #include "widl.h"
 #include "utils.h"
@@ -44,6 +48,9 @@
 #include "typelib_struct.h"
 #include "typetree.h"
 
+#ifdef __REACTOS__
+static typelib_t *typelib;
+#endif
 
 /* List of oleauto types that should be recognized by name.
  * (most of) these seem to be intrinsic types in mktyplib.
@@ -239,6 +246,21 @@ unsigned short get_type_vt(type_t *t)
   return 0;
 }
 
+#ifdef __REACTOS__
+void start_typelib(typelib_t *typelib_type)
+{
+    if (!do_typelib) return;
+    typelib = typelib_type;
+}
+
+void end_typelib(void)
+{
+    if (!typelib) return;
+
+    create_msft_typelib(typelib);
+}
+#endif
+
 static void tlb_read(int fd, void *buf, int count)
 {
     if(read(fd, buf, count) < count)
@@ -363,7 +385,11 @@ static void read_importlib(importlib_t *importlib)
     close(fd);
 }
 
+#ifdef __REACTOS__
+void add_importlib(const char *name)
+#else
 void add_importlib(const char *name, typelib_t *typelib)
+#endif
 {
     importlib_t *importlib;
 
