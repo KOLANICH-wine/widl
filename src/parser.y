@@ -127,7 +127,9 @@ static struct namespace global_namespace = {
 static struct namespace *current_namespace = &global_namespace;
 static struct namespace *lookup_namespace = &global_namespace;
 
+#ifndef __REACTOS__
 static typelib_t *current_typelib;
+#endif
 
 %}
 %union {
@@ -324,7 +326,9 @@ input: gbl_statements m_acf			{ check_statements($1, FALSE);
 						  write_client($1);
 						  write_server($1);
 						  write_regscript($1);
+#ifndef __REACTOS__
 						  write_typelib_regscript($1);
+#endif
 						  write_dlldata($1);
 						  write_local_stubs($1);
 						}
@@ -425,18 +429,33 @@ import: import_start imp_statements aEOF	{ $$ = $1->name;
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'
+/* ifdef __REACTOS__ */
+	   semicolon_opt			{ $$ = $3; if(!parse_only) add_importlib($3); }
+/* else
 	   semicolon_opt			{ $$ = $3; if(!parse_only) add_importlib($3, current_typelib); }
+*/
 	;
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	|   tLIBRARY aKNOWNTYPE			{ $$ = $2; }
 	;
 library_start: attributes libraryhdr '{'	{ $$ = make_library($2, check_library_attrs($2, $1));
+/* ifdef __REACTOS__ */
+						  if (!parse_only) start_typelib($$);
+/* else
 						  if (!parse_only && do_typelib) current_typelib = $$;
+*/
 						}
 	;
 librarydef: library_start imp_statements '}'
+/* ifdef __REACTOS__ */
+	    semicolon_opt			{ $$ = $1;
+						  $$->stmts = $2;
+						  if (!parse_only) end_typelib();
+						}
+/* else
 	    semicolon_opt			{ $$ = $1; $$->stmts = $2; }
+*/
 	;
 
 m_args:						{ $$ = NULL; }
@@ -1941,7 +1960,15 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
         type->attrs = attrs;
   }
 
-  LIST_FOR_EACH_ENTRY( decl, decls, declarator_t, entry )
+#ifdef __REACTOS__ /* r53187 / 5bf224e */
+  /* Append the SWITCHTYPE attribute to a non-encapsulated union if it does not already have it.  */
+  if (type_get_type_detect_alias(type) == TYPE_UNION &&
+      is_attr(attrs, ATTR_SWITCHTYPE) &&
+      !is_attr(type->attrs, ATTR_SWITCHTYPE))
+    type->attrs = append_attr(type->attrs, make_attrp(ATTR_SWITCHTYPE, get_attrp(attrs, ATTR_SWITCHTYPE)));
+#endif
+
+  LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )
   {
 
     if (decl->var->name) {

@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
+#include "wine/config.h"
 #include "wine/port.h"
 
 #include <stdio.h>
@@ -3649,7 +3649,8 @@ static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
     case TGT_POINTER:
     {
         enum type_context ref_context;
-        type_t *ref = type_pointer_get_ref_type(type);
+        unsigned int toplevel_offset = *typeformat_offset;
+        type_t *ref = type_pointer_get_ref(type);
 
         if (context == TYPE_CONTEXT_TOPLEVELPARAM)
             ref_context = TYPE_CONTEXT_PARAM;
@@ -3666,7 +3667,7 @@ static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
             offset = write_type_tfs(file, attrs, ref, name, ref_context, typeformat_offset);
             if (context == TYPE_CONTEXT_CONTAINER_NO_POINTERS)
                 return 0;
-            return offset;
+            return (context == TYPE_CONTEXT_TOPLEVELPARAM) ? toplevel_offset : offset;
         }
 
         offset = write_type_tfs( file, attrs, type_pointer_get_ref_type(type), name,
@@ -4813,9 +4814,14 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
         if (is_array( arg->declspec.type ) || is_ptr( arg->declspec.type )) align = pointer_size;
         else type_memsize_and_alignment( arg->declspec.type, &align );
 
-        if (align < pointer_size)
-            fprintf( file, "DECLSPEC_ALIGN(%u) ", pointer_size );
-        fprintf( file, "%s;\n", arg->name );
+        if (align >= pointer_size)
+            fprintf( file, "%s;\n", arg->name );
+        else
+#ifdef __REACTOS__
+            fprintf( file, "DECLSPEC_ALIGN(%u) %s;\n", pointer_size, arg->name );
+#else
+            fprintf( file, "%s DECLSPEC_ALIGN(%u);\n", arg->name, pointer_size );
+#endif
     }
     if (add_retval && !is_void( retval->declspec.type ))
     {
@@ -4836,7 +4842,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
 
 void write_pointer_checks( FILE *file, int indent, const var_t *func )
 {
-    const var_list_t *args = type_function_get_args( func->declspec.type );
+    const var_list_t *args = type_get_function_args( func->type );
     const var_t *var;
 
     if (!args) return;
