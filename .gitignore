@@ -1,0 +1,6 @@
+#/include
+/build
+/private_include/config.h
+/src/parser.tab.c
+/src/parser.tab.h
+/src/parser.yy.c

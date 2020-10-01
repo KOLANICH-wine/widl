@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
+#include "wine/config.h"
 #include "wine/port.h"
 
 #include <stdio.h>
@@ -4836,7 +4836,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
 
 void write_pointer_checks( FILE *file, int indent, const var_t *func )
 {
-    const var_list_t *args = type_function_get_args( func->declspec.type );
+    const var_list_t *args = type_get_function_args( func->declspec.type );
     const var_t *var;
 
     if (!args) return;

@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/config.h"
 
 #include <stdarg.h>
 #include <stdio.h>
